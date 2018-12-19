@@ -1,0 +1,37 @@
+{
+  "name": "tenki",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "repository": "git@github.com:esphas/tenki.git",
+  "author": "Esphas <esphas@hotmail.com>",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "bin": "bin/tenki",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "lint": "tslint -p .",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@types/node": "^10.12.15",
+    "minimatch": "^3.0.4",
+    "ramda": "^0.26.1",
+    "typescript": "^3.2.2",
+    "winston": "^3.1.0",
+    "yargs": "^12.0.5"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.10",
+    "@types/minimatch": "^3.0.3",
+    "@types/ramda": "^0.25.44",
+    "@types/yargs": "^12.0.1",
+    "jest": "^23.6.0",
+    "rimraf": "^2.6.2",
+    "ts-jest": "^23.10.5",
+    "tslint": "^5.12.0"
+  }
+}
