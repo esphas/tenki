@@ -17,7 +17,7 @@ const readTenkiFile = async (
 
   logger.verbose(`Reading '${relativePath}'...`);
 
-  const absolutePath = path.resolve(root, relativePath);
+  const absolutePath = path.join(root, relativePath);
 
   if (stats == null) {
     logger.debug(`'${relativePath}' provided no stats, read stats.`);
@@ -51,26 +51,20 @@ const readTenkiFile = async (
       subfiles: [],
     };
 
-    type Filter = (path: string, name: string, dirent: fs.Dirent) => boolean;
+    type Matcher = (path: string, name: string, dirent: fs.Dirent) => boolean;
 
     const mkFilter =
-      (fn: Filter) =>
-        R.filter<fs.Dirent, 'array'>(
-          (drt) => fn(path.join(relativePath, drt.name), drt.name, drt),
-        );
+      (fn: Matcher) =>
+        (d: fs.Dirent) => fn(path.join(relativePath, d.name), d.name, d);
 
-    // list of filters
-    const filters: Filter[] = [
+    const filters = R.map(mkFilter, [
+      /** Matchers */
       dotfile,
       config,
-    ];
+      // ...
+    ]);
 
-    // upstream(@types/ramda): see github:types/npm-ramda issue #414
-    const filter: (list: fs.Dirent[]) => fs.Dirent[] = (R.pipe as any)(
-      ...R.map(mkFilter, filters),
-    );
-
-    const list = filter(fs.readdirSync(absolutePath, {
+    const list = R.filter(R.allPass(filters), fs.readdirSync(absolutePath, {
       withFileTypes: true,
     }));
 
