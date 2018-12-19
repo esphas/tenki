@@ -1,12 +1,12 @@
 
-import build from "./build";
+import build from './build';
 
-describe("build", () => {
+describe('build', () => {
 
-  it("works", async () => {
+  it('works', async () => {
     await build({
       debug: true,
-      src: ".",
+      src: 'test',
     });
   });
 

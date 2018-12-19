@@ -11,44 +11,52 @@ import { TenkiFile } from './types/tenki';
 
 const readTenkiFile = async (
   root: string,
-  filepath: string,
-  name: string,
+  relativePath: string = '.',
   stats?: fs.Stats | fs.Dirent,
-): Promise<TenkiFile<'regular'> | TenkiFile<'directory'> | null> => {
+): Promise<TenkiFile | null> => {
+
+  logger.verbose(`Reading '${relativePath}'...`);
+
+  const absolutePath = path.resolve(root, relativePath);
 
   if (stats == null) {
-    logger.debug(`'${filepath}' provided no stats, read stats.`);
-    stats = fs.statSync(path.join(root, filepath));
+    logger.debug(`'${relativePath}' provided no stats, read stats.`);
+    stats = fs.statSync(absolutePath);
   }
 
-  logger.verbose(`Processing '${filepath}'...`);
-
-  const file: TenkiFile<'regular' | 'directory'> = {
-    name,
-    path: filepath,
-    subdirectories: [],
-    subfiles: [],
-    type: 'regular',
+  const base = {
+    name: path.basename(absolutePath),
+    path: relativePath,
   };
 
   if (stats.isFile()) {
 
-    logger.verbose('...is a file.');
+    logger.verbose('...as a file.');
 
-    return file as TenkiFile<'regular'>;
+    // TODO: read file?
+
+    return {
+      ...base,
+      type: 'regular',
+    };
 
   } else if (stats.isDirectory()) {
 
     logger.verbose('...is a directory.');
 
-    file.type = 'directory';
+    const file: TenkiFile = {
+      ...base,
+      type: 'directory',
+      subdirectories: [],
+      subfiles: [],
+    };
 
     type Filter = (path: string, name: string, dirent: fs.Dirent) => boolean;
 
     const mkFilter =
       (fn: Filter) =>
         R.filter<fs.Dirent, 'array'>(
-          (dirent) => fn(path.join(filepath, dirent.name), dirent.name, dirent),
+          (drt) => fn(path.join(relativePath, drt.name), drt.name, drt),
         );
 
     // list of filters
@@ -62,7 +70,7 @@ const readTenkiFile = async (
       ...R.map(mkFilter, filters),
     );
 
-    const list = filter(fs.readdirSync(path.join(root, filepath), {
+    const list = filter(fs.readdirSync(absolutePath, {
       withFileTypes: true,
     }));
 
@@ -70,8 +78,7 @@ const readTenkiFile = async (
     await Promise.all(R.map(async (dirent) => {
       const sub = await readTenkiFile(
         root,
-        path.join(filepath, dirent.name),
-        dirent.name,
+        path.join(relativePath, dirent.name),
         dirent,
       );
       if (sub == null) {
@@ -91,7 +98,7 @@ const readTenkiFile = async (
     file.subfiles = R.sortBy(R.prop('name'), file.subfiles);
     file.subdirectories = R.sortBy(R.prop('name'), file.subdirectories);
 
-    return file as TenkiFile<'directory'>;
+    return file;
 
   } // if isDirectory()
 
@@ -101,10 +108,46 @@ const readTenkiFile = async (
 
 }; // readTenkiFile
 
+const writeTenkiFile = async (
+  root: string,
+  file: TenkiFile,
+) => {
+
+  logger.verbose(`Writing '${file.name}'...`);
+
+  const absolutePath = path.resolve(root, file.path);
+
+  logger.verbose(`...to '${absolutePath}'`);
+
+  if (file.type === 'regular') {
+
+    logger.verbose('...as a regular file...');
+
+    // TODO: write file
+
+  } else if (file.type === 'directory') {
+
+    logger.verbose('...as a directory...');
+
+    fs.mkdirSync(path.join(root, file.path));
+
+    const write = writeTenkiFile.bind(null, root);
+
+    await Promise.all(R.map(write, file.subdirectories));
+
+    await Promise.all(R.map(write, file.subfiles));
+
+  } else { /** Unreachable */ }
+
+  logger.verbose(`...done with ${file.name}`);
+
+}; // writeTenkiFile
+
 const build = async ({
   verbose = false,
   debug = false,
   src = '.',
+  dest = '_site',
 } = {}) => {
 
   /** Global Configs */
@@ -129,19 +172,28 @@ const build = async ({
     throw new Error();
   }
 
-  const absolute = path.resolve(src);
+  /** Reading Src */
 
-  const root = await readTenkiFile(absolute, '.', path.basename(absolute));
+  const absoluteSrc = path.resolve(src);
+
+  const srcRoot = await readTenkiFile(absoluteSrc);
 
   // type guard
-  if (root == null || root.type === 'regular') {
+  if (srcRoot == null || srcRoot.type === 'regular') {
     logger.error('Unknown Error!');
     throw new Error();
   }
 
-  // TODO: process files
+  /** Processing */
 
-  // TODO: write files
+  // TODO: process files
+  const destRoot = srcRoot;
+
+  /** Writing Dest */
+
+  const absoluteDest = path.resolve(dest);
+
+  await writeTenkiFile(absoluteDest, destRoot);
 
 };
 

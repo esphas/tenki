@@ -1,8 +1,18 @@
 
-export interface TenkiFile<Type> {
-  type: Type;
+interface TenkiFileBase {
+  type: string;
   name: string;
   path: string;
-  subfiles: TenkiFile<'regular'>[];
-  subdirectories: TenkiFile<'directory'>[];
 }
+
+interface TenkiFileRegular extends TenkiFileBase {
+  type: 'regular';
+}
+
+interface TenkiFileDirectory extends TenkiFileBase {
+  type: 'directory';
+  subdirectories: TenkiFileDirectory[];
+  subfiles: TenkiFileRegular[];
+}
+
+export type TenkiFile = TenkiFileRegular | TenkiFileDirectory;
