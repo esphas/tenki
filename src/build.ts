@@ -14,7 +14,7 @@ const readTenkiFile = async (
   filepath: string,
   name: string,
   stats?: fs.Stats | fs.Dirent,
-): Promise<null | TenkiFile<'regular'> | TenkiFile<'directory'>> => {
+): Promise<TenkiFile<'regular'> | TenkiFile<'directory'> | null> => {
 
   if (stats == null) {
     logger.debug(`'${filepath}' provided no stats, read stats.`);
