@@ -33,7 +33,7 @@ const readTenkiFile = async (
 
     logger.verbose('...as a file.');
 
-    // TODO: read file?
+    /** do not read file content here */
 
     return {
       ...base,
@@ -107,7 +107,7 @@ const writeTenkiFile = async (
   file: TenkiFile,
 ) => {
 
-  logger.verbose(`Writing '${file.name}'...`);
+  logger.verbose(`Writing '${file.path}'...`);
 
   const absolutePath = path.resolve(root, file.path);
 
@@ -136,6 +136,17 @@ const writeTenkiFile = async (
   logger.verbose(`...done with ${file.name}`);
 
 }; // writeTenkiFile
+
+const processTenkiFile = async (
+  srcFile: TenkiFile,
+) => {
+
+  logger.verbose(`Processing '${srcFile.path}'...`);
+
+  // TODO: processing file
+  return srcFile;
+
+};
 
 const build = async ({
   verbose = false,
@@ -181,7 +192,7 @@ const build = async ({
   /** Processing */
 
   // TODO: process files
-  const destRoot = srcRoot;
+  const destRoot = await processTenkiFile(srcRoot);
 
   /** Writing Dest */
 
